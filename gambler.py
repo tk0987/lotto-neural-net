@@ -27,7 +27,7 @@ def generator_loss(pred1,inp1):
             diff2-=1e2
             
         else:
-            diff2+=(pred1[0,0,j]-inp1[0,0,j])**6
+            diff2+=(pred1[0,0,j]-inp1[0,0,j])**2
     if no==3:
         diff1-=9e2*no
     if no==4:
@@ -36,7 +36,7 @@ def generator_loss(pred1,inp1):
         diff1-=9e8*no
     if no==6:
         diff1-=9e18*no
-    diff2+=(6-no)**8
+    
     return diff1+diff2
 
 
@@ -78,7 +78,7 @@ def build_static_model():
                                                 name=f'expand_mask_i{i}_j{j}')(condition)
 
             # Create branch
-            branch_output = create_branch_block(branch_input, i, j, n=16, dilation_rate=24)  # shape: (batch, 1, units)
+            branch_output = create_branch_block(branch_input, i, j, n=2, dilation_rate=24)  # shape: (batch, 1, units)
             masked_output = tf.keras.layers.Multiply(name=f'masked_i{i}_j{j}')([branch_output, condition_exp])
             branch_outputs.append(masked_output)
 
@@ -101,6 +101,7 @@ def train_step(inp, comparable):
         outs = model(inp, training=True)
         # gen_loss = 
         gen_mse=generator_loss(comparable,outs)
+    # print(gen_mse)
 
     gradients_gen = gen_tape.gradient(gen_mse, model.trainable_variables)
     opti.apply_gradients(zip(gradients_gen, model.trainable_variables))
