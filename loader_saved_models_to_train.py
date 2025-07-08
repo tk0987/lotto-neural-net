@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 import os
-
+import sys 
 # Set up optimizer
 opti = tf.keras.optimizers.AdamW(1e-4)
 
@@ -111,21 +111,38 @@ def train_step(inp, comparable):
     return loss.numpy()
 
 
+import sys
+
 def train(dataset, epochs):
     best_loss = float('inf')
+    total_iters = len(dataset[0]) - 1
+
     for epoch in range(epochs):
         total_loss = 0.0
-        for i in tqdm(range(len(dataset[0]) - 1)):
+
+        for i in range(total_iters):
             inp = data[:, i:i + 1]
             target = data[:, i + 1:i + 2]
             loss = train_step(inp, target)
             total_loss += loss
-        print(f"Epoch {epoch + 1}: loss = {total_loss}")
+
+            # Calculate percent progress
+            percent = int((i + 1) / total_iters * 100)
+
+            # Compose live output string
+            progress_line = f"\rEpoch {epoch + 1}/{epochs} | {percent}% | Step {i + 1}/{total_iters} | Loss: {loss:.4f} | Total Loss: {total_loss:.4f}"
+            sys.stdout.write(progress_line)
+            sys.stdout.flush()
+
+        # Clear line after epoch completes
+        sys.stdout.write("\r" + " " * len(progress_line) + "\r")
+        print(f"✅ Epoch {epoch + 1} complete | Final Loss: {total_loss:.4f}")
 
         if total_loss < best_loss:
             best_loss = total_loss
             model.save(model_path)
-            print(f"Model saved at epoch {epoch + 1} with loss {best_loss}")
+            print(f"💾 Model saved at epoch {epoch + 1} with loss {best_loss:.4f}")
+
 
 
 # Run training
