@@ -1,10 +1,13 @@
-Load and preprocess dataset
+import tensorflow as tf
+import numpy as np
+import os, sys
+with tf.device('CPU:0'):
+    # Load and preprocess dataset
     data = np.loadtxt("lotto.txt", dtype=np.float32)
     data = np.round(data)
     data = data[np.newaxis, :, :]  # Shape: (1,1, 6)
     data = tf.convert_to_tensor(data)
 
-    # 🧠 Custom loss function
     def generator_loss(pred1, inp1):
         no = 0
         diff1 = 0.0
@@ -25,7 +28,6 @@ Load and preprocess dataset
             diff1 -= 9e18 * no
         return diff1 + diff2
 
-    # 🎛️ Generator architecture factory
     def create_generator_model(index):
         input_tensor = tf.keras.Input(shape=(1, 6), batch_size=1, name=f"input_{index}")
         x = tf.keras.layers.Conv1D(64, 3, padding="causal", activation="relu")(input_tensor)
@@ -34,11 +36,10 @@ Load and preprocess dataset
         x = tf.keras.layers.Dense(6, activation="elu")(x)
         return tf.keras.Model(inputs=input_tensor, outputs=x, name=f"Generator_{index}")
 
-    # 🧩 Build all generators + optimizers
+
     generators = [create_generator_model(j) for j in range(49)]
     optimizers = [tf.keras.optimizers.AdamW(1e-4) for _ in range(49)]
 
-    # 🔧 Training step for a specific model
     def train_step(model, optimizer, inp, target):
         with tf.GradientTape() as tape:
             generated = model(inp, training=True)
@@ -47,7 +48,7 @@ Load and preprocess dataset
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
         return g_loss, generated
 
-    # 🧪 Training loop with per-value routing
+
     def train(dataset, epochs):
         best_loss = [float('inf')] * 49
         total_iters = len(dataset[0]) - 1
@@ -91,5 +92,5 @@ Load and preprocess dataset
                     generators[j].save(path)
                     print(f"💾 Model saved for branch {j} at epoch {epoch + 1} with loss {best_loss[j]:.4f}")
 
-    # 🚀 Start training
+    
     train(data, 150)
