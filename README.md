@@ -10,9 +10,13 @@ net is untested - previous one optimized to stable numbers, which didnt change (
 ah... previous numbers:
 
   13.703472
+  
   20.929033
+  
   28.303934
+  
   35.617138
+  
   43.11871
 
 Kind of golden center...
