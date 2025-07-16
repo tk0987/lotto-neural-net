@@ -12,12 +12,19 @@ with tf.device('CPU:0'):
         no = 0
         diff1 = 0.0
         diff2 = 0.0
-        for j in range(len(inp1[0, 0])):
-            if inp1[0, 0, j] - 0.2 <= pred1[0, 0, j] <= inp1[0, 0, j] + 0.2:
+        pred_vals = tf.reshape(pred1, (6,))
+        target_vals = tf.reshape(inp1, (6,))
+
+        for j in range(6):
+            diff = pred_vals[j] - target_vals[j]
+            if (pred_vals[j] >= target_vals[j] - 0.2) and (pred_vals[j] <= target_vals[j] + 0.2):
                 no += 1
-                diff2 -= 1e4
+                diff2 += 1e-6
             else:
-                diff2 += 100 * (pred1[0, 0, j] - inp1[0, 0, j]) ** 2
+                diff2 += diff ** 2
+            if target_vals[j] < 0.5:
+                diff2 += 10 * diff ** 2
+
         if no == 3:
             diff1 -= 9e2 * no
         if no == 4:
@@ -29,11 +36,12 @@ with tf.device('CPU:0'):
         return diff1 + diff2
 
     def create_generator_model(index):
-        input_tensor = tf.keras.Input(shape=(1, 6), batch_size=1, name=f"input_{index}")
+        input_tensor = tf.keras.Input(shape=(200, 6), batch_size=1, name=f"input_{index}")
         x = tf.keras.layers.Conv1D(64, 3, padding="causal", activation="relu")(input_tensor)
-        x = tf.keras.layers.Conv1D(64, 1, padding="causal", activation="gelu")(x)
+        x = tf.keras.layers.Conv1D(32, 1, padding="causal", activation="linear")(x)
         # x = tf.keras.layers.Dense(32, activation="gelu")(x)
-        x = tf.keras.layers.Dense(6, activation="elu")(x)
+        x = tf.keras.layers.GlobalAveragePooling1D()(x)
+        x = tf.keras.layers.Dense(6, activation="softplus")(x)
         return tf.keras.Model(inputs=input_tensor, outputs=x, name=f"Generator_{index}")
 
 
@@ -55,15 +63,17 @@ with tf.device('CPU:0'):
 
         for epoch in range(epochs):
             total_loss = [0.0] * 49
-
+            progress_line = ""
+            # for window in range(len(data)-201):
             for i in range(total_iters):
-                inp = data[:, i:i + 1]
-                target = data[:, i + 1:i + 2]
+                inp = data[:, i:i + 200, :]            # shape: (1, 200, 6)
+                target = data[:, i + 200:i + 201, :]   # shape: (1, 1, 6)
+
 
                 active_branches = set()
 
                 for feature_index in range(6):
-                    j = int(inp[0, 0, feature_index])
+                    j = int(inp[:, 0, feature_index])
                     j =int(j-1)  # clamp safely
                     model = generators[j]
                     optimizer = optimizers[j]
