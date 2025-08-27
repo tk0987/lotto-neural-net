@@ -22,3 +22,5 @@ ah... previous numbers:
 Kind of golden center...
 
 another_gambler.py is written for extra pensja game, which has two sets of numbers. it represents old architecture, without dynamic branches.
+
+aha - dynamic version of another_gambler run just fine on gpu (laptop) with 4 GB RAM. Nice
