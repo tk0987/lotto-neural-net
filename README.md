@@ -20,3 +20,5 @@ ah... previous numbers:
   43.11871
 
 Kind of golden center...
+
+another_gambler.py is written for extra pensja game, which has two sets of numbers. it represents old architecture, without dynamic branches.
