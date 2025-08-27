@@ -108,7 +108,7 @@ with tf.device("GPU:0"):
     def train_step(input1,input2, comparable1,comparable2):
         
         
-        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+        with tf.GradientTape() as gen_tape:
             generated_images = model_generator([input1,input2], training=True)
             # print(generated_images)
             gen_mse=discriminator_loss(comparable1,comparable2,generated_images[0],generated_images[1])
