@@ -9,7 +9,6 @@ os.environ['XLA_FLAGS'] = '--xla_gpu_cuda_data_dir=/usr/lib/nvidia-cuda-toolkit/
 # Set random seed for reproducibility
 tf.random.set_seed(384)
 
-# 🧠 Model Architecture
 def gen(n, batch):
         inputs=tf.keras.layers.Input(shape=(150,5),batch_size=batch)
         inputs2=tf.keras.layers.Input(shape=(150,1),batch_size=batch)
@@ -51,7 +50,6 @@ def gen(n, batch):
         
         return tf.keras.Model([inputs,inputs2],[final,final2])
 
-# 🧪 Loss Function
 def generator_loss(inp1, inp2, pred1, pred2):
     mask_close = tf.logical_and(pred1 >= inp1 - 0.5, pred1 <= inp1 + 0.5)
     no = 5 - tf.reduce_sum(tf.cast(mask_close, tf.float32))
@@ -74,18 +72,15 @@ def generator_loss(inp1, inp2, pred1, pred2):
 
     return diff1 + diff2
 
-# 🧬 Data Loading
 data = np.loadtxt("ep.txt", dtype=np.int16)
 data = np.round(data)
 
-# 🧠 Model Initialization
 with tf.device("GPU:0"):
     generators_main = [gen(256, 1) for _ in range(35)]
     generators_bonus = [gen(256, 1) for _ in range(4)]
     optimizers_main = [tf.keras.optimizers.AdamW(1e-4) for _ in range(35)]
     optimizers_bonus = [tf.keras.optimizers.AdamW(1e-4) for _ in range(4)]
 
-# 🔁 Training Step
 def train_step(model, optimizer, inp_main, inp_bonus, target_main, target_bonus):
     with tf.GradientTape() as tape:
         pred_main, pred_bonus = model([inp_main, inp_bonus], training=True)
@@ -94,7 +89,6 @@ def train_step(model, optimizer, inp_main, inp_bonus, target_main, target_bonus)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss, pred_main, pred_bonus
 
-# 🚀 Training Loop
 def train(dataset, epochs):
     best_loss_main = [float('inf')] * 35
     best_loss_bonus = [float('inf')] * 4
@@ -133,5 +127,4 @@ def train(dataset, epochs):
                 best_loss_bonus[j] = loss
                 generators_bonus[j].save(f"/home/tk/Desktop/pensja/GEN_bonus_{j}.keras")
 
-# 🏁 Start Training
 train(data, epochs=500)
